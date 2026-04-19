@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  BASE
+  PREMIUM
+  EXOTIC
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  OUT_FOR_DELIVERY
+  DELIVERED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  SUB_ADMIN
+}
+
+model Product {
+  id              String   @id @default(uuid())
+  name            String
+  category        Category
+  price           Float
+  imageUrl        String
+
+  benefits        Json
+  storageTips     Json
+  consumptionTips Json
+  tags            Json
+
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  inventories     Inventory[]
+  cartItems       Cart[]
+  orderItems      OrderItem[]
+
+  @@index([category])
+}
+
+model Inventory {
+  id                String   @id @default(uuid())
+  productId         String
+  availableQuantity Float
+
+  city              String   @default("narasaraopet")
+  weekStartDate     DateTime
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([productId, city])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  phoneNumber String   @unique
+
+  createdAt   DateTime @default(now())
+
+  carts       Cart[]
+  orders      Order[]
+
+  @@index([phoneNumber])
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  userId     String
+  status     OrderStatus
+
+  totalPrice Float
+
+  address    String
+  phone      String
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User        @relation(fields: [userId], references: [id])
+  items  OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+
+  quantity  Int
+  price     Float
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model Admin {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+
+  role      AdminRole
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
