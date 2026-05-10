@@ -29,7 +29,9 @@ model Product {
   id              String   @id @default(uuid())
   name            String
   category        Category
-  price           Float
+
+  isPerishable    Boolean  @default(true)
+  
   imageUrl        String
 
   benefits        Json
@@ -39,26 +41,33 @@ model Product {
 
   isActive        Boolean  @default(true)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
   inventories     Inventory[]
   cartItems       Cart[]
   orderItems      OrderItem[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([category])
 }
 
 model Inventory {
-  id                String   @id @default(uuid())
-  productId         String
-  availableQuantity Float
+  id                   String   @id @default(uuid())
 
-  city              String   @default("narasaraopet")
-  weekStartDate     DateTime
+  productId            String
+  city                 String
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  availableQuantity    Float    @default(0)
+
+  costPrice            Float
+  transportCost        Float
+  storageCost          Float
+
+  mrp                  Float
+  discountPercentage   Float    @default(0)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id])
 
@@ -94,37 +103,56 @@ model Cart {
 }
 
 model Order {
-  id         String      @id @default(uuid())
-  userId     String
-  status     OrderStatus
+  id               String   @id @default(uuid())
 
-  totalPrice Float
+  userId           String
 
-  address    String
-  phone      String
+  status           OrderStatus
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  subtotal         Float
+  handlingCharge   Float
+  deliveryCharge   Float
 
-  user   User        @relation(fields: [userId], references: [id])
-  items  OrderItem[]
+  finalPayable     Float
 
-  @@index([userId])
-  @@index([status])
+  totalPrice       Float
+
+  city             String
+
+  address          String
+  phone            String
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  items OrderItem[]
 }
 
 model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String
-  productId String
+  id                   String @id @default(uuid())
 
-  quantity  Int
-  price     Float
+  orderId              String
+  productId            String
 
-  order   Order   @relation(fields: [orderId], references: [id])
+  quantity             Float
+
+  // snapshot data
+  productName          String
+  productImageUrl      String
+
+  mrp                  Float
+  discountPercentage   Float
+
+  sellingPrice         Float
+
+  // backward compatibility
+  price                Float
+
+  order Order @relation(fields: [orderId], references: [id])
+
   product Product @relation(fields: [productId], references: [id])
-
-  @@index([orderId])
 }
 
 model Admin {
