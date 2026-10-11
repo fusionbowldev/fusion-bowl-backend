@@ -8,24 +8,39 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
-const product_module_1 = require("./modules/product/product.module");
-const inventory_module_1 = require("./modules/inventory/inventory.module");
-const cart_module_1 = require("./modules/cart/cart.module");
-const health_module_1 = require("./modules/health/health.module");
-const order_module_1 = require("./modules/order/order.module");
-const admin_module_1 = require("./modules/admin/admin.module");
+const admin_controller_1 = require("./modules/admin/admin.controller");
+const admin_service_1 = require("./modules/admin/admin.service");
+const cart_controller_1 = require("./modules/cart/cart.controller");
+const cart_service_1 = require("./modules/cart/cart.service");
+const inventory_controller_1 = require("./modules/inventory/inventory.controller");
+const inventory_service_1 = require("./modules/inventory/inventory.service");
+const order_controller_1 = require("./modules/order/order.controller");
+const order_service_1 = require("./modules/order/order.service");
+const product_controller_1 = require("./modules/product/product.controller");
+const product_service_1 = require("./modules/product/product.service");
+const prisma_service_1 = require("./prisma/prisma.service");
+const health_controller_1 = require("./health.controller");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            health_module_1.HealthModule,
-            product_module_1.ProductModule,
-            inventory_module_1.InventoryModule,
-            cart_module_1.CartModule,
-            order_module_1.OrderModule,
-            admin_module_1.AdminModule
+        imports: [],
+        controllers: [
+            health_controller_1.HealthController,
+            admin_controller_1.AdminController,
+            cart_controller_1.CartController,
+            inventory_controller_1.InventoryController,
+            order_controller_1.OrderController,
+            product_controller_1.ProductController,
+        ],
+        providers: [
+            admin_service_1.AdminService,
+            cart_service_1.CartService,
+            inventory_service_1.InventoryService,
+            order_service_1.OrderService,
+            product_service_1.ProductService,
+            prisma_service_1.PrismaService,
         ],
     })
 ], AppModule);

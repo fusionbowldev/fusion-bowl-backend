@@ -33,7 +33,8 @@ let AdminService = class AdminService {
             data: {
                 name: body.name,
                 category: body.category,
-                price: body.price,
+                isPerishable: body.isPerishable,
+                // price: body.price,
                 imageUrl: body.imageUrl,
                 benefits: body.benefits,
                 storageTips: body.storageTips,
@@ -51,19 +52,29 @@ let AdminService = class AdminService {
     }
     // Update Inventory (weekly stock)
     async updateInventory(body) {
+        const city = body.city ?? 'narasaraopet';
+        const weekStartDate = body.weekStartDate ?? new Date();
         return this.prisma.inventory.upsert({
             where: {
-                id: body.id || '',
+                productId_city: {
+                    productId: body.productId,
+                    city,
+                },
             },
             update: {
                 availableQuantity: {
                     increment: body.availableQuantity,
                 },
+                updatedAt: new Date(),
             },
             create: {
                 productId: body.productId,
                 availableQuantity: body.availableQuantity,
-                weekStartDate: new Date(),
+                city: body.city,
+                mrp: body.mrp,
+                costPrice: body.costPrice,
+                transportCost: body.transportCost || 0,
+                storageCost: body.storageCost || 0,
             },
         });
     }

@@ -19,19 +19,29 @@ let CartController = class CartController {
     constructor(cartService) {
         this.cartService = cartService;
     }
-    addToCart(body, userId) {
-        return this.cartService.add(userId, body.productId, body.quantity);
+    addToCart(body) {
+        return this.cartService.add(body.userId, body.productId, body.quantity, body.city);
+    }
+    getCart(userId, city) {
+        return this.cartService.getCart(userId, city);
     }
 };
 exports.CartController = CartController;
 __decorate([
     (0, common_1.Post)('add'),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Headers)('x-user-id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], CartController.prototype, "addToCart", null);
+__decorate([
+    (0, common_1.Get)(':userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Query)('city')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], CartController.prototype, "getCart", null);
 exports.CartController = CartController = __decorate([
     (0, common_1.Controller)('cart'),
     __metadata("design:paramtypes", [cart_service_1.CartService])

@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductController = void 0;
 const common_1 = require("@nestjs/common");
@@ -16,17 +19,28 @@ let ProductController = class ProductController {
     constructor(productService) {
         this.productService = productService;
     }
-    getProducts() {
-        return this.productService.getProducts();
+    getProducts(city) {
+        return this.productService.getProducts(city);
+    }
+    createProduct(body) {
+        return this.productService.createProduct(body);
     }
 };
 exports.ProductController = ProductController;
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)('city')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ProductController.prototype, "getProducts", null);
+__decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ProductController.prototype, "createProduct", null);
 exports.ProductController = ProductController = __decorate([
     (0, common_1.Controller)('products'),
     __metadata("design:paramtypes", [product_service_1.ProductService])

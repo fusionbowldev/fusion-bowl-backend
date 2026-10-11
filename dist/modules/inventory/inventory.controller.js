@@ -19,18 +19,39 @@ let InventoryController = class InventoryController {
     constructor(inventoryService) {
         this.inventoryService = inventoryService;
     }
-    getStock(productId) {
-        return this.inventoryService.getStock(productId);
+    getInventoryForProducts(city) {
+        return this.inventoryService.getInventoryForProducts(city);
+    }
+    getInventory(productId, city) {
+        return this.inventoryService.getInventory(productId, city);
+    }
+    updateInventory(body) {
+        return this.inventoryService.updateInventory(body);
     }
 };
 exports.InventoryController = InventoryController;
 __decorate([
-    (0, common_1.Get)(':productId'),
-    __param(0, (0, common_1.Param)('productId')),
+    (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)('city')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], InventoryController.prototype, "getStock", null);
+], InventoryController.prototype, "getInventoryForProducts", null);
+__decorate([
+    (0, common_1.Get)(':productId'),
+    __param(0, (0, common_1.Param)('productId')),
+    __param(1, (0, common_1.Query)('city')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "getInventory", null);
+__decorate([
+    (0, common_1.Post)('update'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "updateInventory", null);
 exports.InventoryController = InventoryController = __decorate([
     (0, common_1.Controller)('inventory'),
     __metadata("design:paramtypes", [inventory_service_1.InventoryService])

@@ -20,7 +20,7 @@ let OrderController = class OrderController {
         this.orderService = orderService;
     }
     async placeOrder(userId, body) {
-        return this.orderService.placeOrder(userId, body.address, body.phone);
+        return this.orderService.placeOrder(userId, body.address, body.phone, body.city);
     }
 };
 exports.OrderController = OrderController;

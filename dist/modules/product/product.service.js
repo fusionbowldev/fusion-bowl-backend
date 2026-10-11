@@ -16,10 +16,56 @@ let ProductService = class ProductService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async getProducts() {
-        console.log("Fetching products...");
-        return this.prisma.product.findMany({
+    async createProduct(data) {
+        return this.prisma.product.create({ data });
+    }
+    async getProducts(city = 'narasaraopet') {
+        const products = await this.prisma.product.findMany({
             where: { isActive: true },
+            include: {
+                inventories: {
+                    where: { city },
+                    take: 1,
+                },
+            },
+        });
+        return products.map((product) => {
+            const inventory = product.inventories[0];
+            if (!inventory) {
+                return {
+                    id: product.id,
+                    name: product.name,
+                    category: product.category,
+                    isPerishable: product.isPerishable,
+                    imageUrl: product.imageUrl,
+                    benefits: product.benefits,
+                    storageTips: product.storageTips,
+                    consumptionTips: product.consumptionTips,
+                    tags: product.tags,
+                    currentStock: 0,
+                    mrp: null,
+                    discountPercentage: 0,
+                    finalPrice: null,
+                    isAvailable: false,
+                };
+            }
+            const finalPrice = inventory.mrp - (inventory.mrp * inventory.discountPercentage) / 100;
+            return {
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                isPerishable: product.isPerishable,
+                imageUrl: product.imageUrl,
+                benefits: product.benefits,
+                storageTips: product.storageTips,
+                consumptionTips: product.consumptionTips,
+                tags: product.tags,
+                currentStock: inventory.availableQuantity,
+                mrp: round(inventory.mrp),
+                discountPercentage: inventory.discountPercentage,
+                finalPrice: round(finalPrice),
+                isAvailable: inventory.availableQuantity > 0,
+            };
         });
     }
 };
@@ -28,3 +74,6 @@ exports.ProductService = ProductService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], ProductService);
+function round(value) {
+    return Math.round(value * 100) / 100;
+}

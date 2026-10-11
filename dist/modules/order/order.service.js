@@ -16,39 +16,51 @@ let OrderService = class OrderService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async placeOrder(userId, address, phone) {
+    async placeOrder(userId, address, phone, city) {
         return this.prisma.$transaction(async (tx) => {
-            // 1. Get cart items
-            const cartItems = await tx.cart.findMany({
-                where: { userId },
-            });
+            const cartItems = await tx.cart.findMany({ where: { userId } });
             if (!cartItems.length) {
                 throw new Error('Cart is empty');
             }
-            const productIds = cartItems.map(item => item.productId);
-            // 2. Fetch all products & inventory in ONE GO
+            const productIds = cartItems.map((item) => item.productId);
             const [products, inventories] = await Promise.all([
-                tx.product.findMany({
-                    where: { id: { in: productIds } },
-                }),
-                tx.inventory.findMany({
-                    where: { productId: { in: productIds } },
-                }),
+                tx.product.findMany({ where: { id: { in: productIds } } }),
+                tx.inventory.findMany({ where: { productId: { in: productIds }, city } }),
             ]);
-            // Convert to map for fast lookup
-            const productMap = new Map(products.map(p => [p.id, p]));
-            const inventoryMap = new Map(inventories.map(i => [i.productId, i]));
-            let totalPrice = 0;
-            // 3. Validate stock
+            const productMap = new Map(products.map((p) => [p.id, p]));
+            const inventoryMap = new Map(inventories.map((i) => [`${i.productId}_${i.city}`, i]));
+            let subtotal = 0;
+            const orderItemsData = [];
             for (const item of cartItems) {
-                const inventory = inventoryMap.get(item.productId);
-                if (!inventory || inventory.availableQuantity < item.quantity) {
-                    throw new Error(`Out of stock for product ${item.productId}`);
+                const product = productMap.get(item.productId);
+                const inventory = inventoryMap.get(`${item.productId}_${city}`);
+                if (!product || !inventory) {
+                    throw new Error(`Product unavailable: ${item.productId}`);
                 }
+                if (inventory.availableQuantity < item.quantity) {
+                    throw new Error(`Out of stock: ${product.name}`);
+                }
+                const mrp = inventory.mrp;
+                const discountPercentage = inventory.discountPercentage || 0;
+                const sellingPrice = mrp - (mrp * discountPercentage) / 100;
+                const itemTotal = sellingPrice * item.quantity;
+                subtotal += itemTotal;
+                orderItemsData.push({
+                    productId: product.id,
+                    productName: product.name,
+                    productImageUrl: product.imageUrl,
+                    quantity: item.quantity,
+                    mrp,
+                    discountPercentage,
+                    sellingPrice,
+                    price: sellingPrice,
+                });
             }
-            // 4. Deduct inventory (atomic)
+            const handlingCharge = [...new Set(cartItems.map(i => i.productId))].length * 3;
+            const deliveryCharge = calculateDelivery(subtotal);
+            const finalPayable = subtotal + handlingCharge + deliveryCharge;
             for (const item of cartItems) {
-                const inventory = inventoryMap.get(item.productId);
+                const inventory = inventoryMap.get(`${item.productId}_${city}`);
                 await tx.inventory.update({
                     where: { id: inventory.id },
                     data: {
@@ -58,44 +70,37 @@ let OrderService = class OrderService {
                     },
                 });
             }
-            // 5. Calculate total
-            for (const item of cartItems) {
-                const product = productMap.get(item.productId);
-                totalPrice += product.price * item.quantity;
-            }
-            // 6. Create order
             const order = await tx.order.create({
                 data: {
                     userId,
                     status: 'PLACED',
-                    totalPrice,
+                    subtotal: round(subtotal),
+                    handlingCharge,
+                    deliveryCharge,
+                    finalPayable: round(finalPayable),
+                    totalPrice: round(finalPayable),
+                    city,
                     address,
                     phone,
                 },
             });
-            // 7. Create order items (batch)
             await tx.orderItem.createMany({
-                data: cartItems.map(item => {
-                    const product = productMap.get(item.productId);
-                    return {
-                        orderId: order.id,
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        price: product.price,
-                    };
-                }),
+                data: orderItemsData.map((item) => ({
+                    ...item,
+                    orderId: order.id,
+                })),
             });
-            // 8. Clear cart
-            await tx.cart.deleteMany({
-                where: { userId },
-            });
+            await tx.cart.deleteMany({ where: { userId } });
             return {
                 success: true,
                 orderId: order.id,
+                pricing: {
+                    subtotal: round(subtotal),
+                    handlingCharge,
+                    deliveryCharge,
+                    finalPayable: round(finalPayable),
+                },
             };
-        }, {
-            maxWait: 10000, // fix connection timeout
-            timeout: 20000, // allow execution time
         });
     }
 };
@@ -104,3 +109,15 @@ exports.OrderService = OrderService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], OrderService);
+function calculateDelivery(subtotal) {
+    if (subtotal >= 300)
+        return 0;
+    if (subtotal >= 200)
+        return 10;
+    if (subtotal >= 100)
+        return 20;
+    return 30;
+}
+function round(value) {
+    return Math.round(value * 100) / 100;
+}

@@ -19,27 +19,27 @@ let AdminController = class AdminController {
     constructor(adminService) {
         this.adminService = adminService;
     }
-    // ✅ Create sub-admin
+    // Create sub-admin
     createSubAdmin(body) {
         return this.adminService.createSubAdmin(body);
     }
-    // ✅ Add product
+    // Add product
     createProduct(body) {
         return this.adminService.createProduct(body);
     }
-    // ✅ Update product
+    // Update product
     updateProduct(id, body) {
         return this.adminService.updateProduct(id, body);
     }
-    // ✅ Update inventory
+    // Update inventory
     updateInventory(body) {
         return this.adminService.updateInventory(body);
     }
-    // ✅ Get all orders
+    // Get all orders
     getOrders() {
         return this.adminService.getOrders();
     }
-    // ✅ Update order status
+    // Update order status
     updateOrderStatus(id, body) {
         return this.adminService.updateOrderStatus(id, body.status);
     }
